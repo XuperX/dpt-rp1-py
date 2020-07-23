@@ -1,3 +1,8 @@
+# WIP
+
+## :bulb: Let's get a sony DP linux GUI!!
+
+
 # dpt-rp1-py
 Python script to manage Sony DPT-RP1 without the Digital Paper App. This repository includes a Python library and a command line utility to manage documents on the DPT-RP1. Tested on Windows, Linux, and macOS. Should also work for Sony's other digital paper readers.
 
