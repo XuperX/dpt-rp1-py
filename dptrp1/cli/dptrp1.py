@@ -11,6 +11,7 @@ import re
 from pathlib import Path
 from dptrp1.dptrp1 import DigitalPaper, find_auth_files, get_default_auth_files
 
+ROOT_FOLDER = 'Document'
 
 def do_screenshot(d, filename):
     """
@@ -23,7 +24,7 @@ def do_screenshot(d, filename):
 def do_list_templates(d):
     data = d.list_templates()
     for d in data:
-        print(d)
+        print(d["template_name"])
 
 def do_list_documents(d):
     data = d.list_documents()
@@ -52,14 +53,19 @@ def do_upload(d, local_path, remote_path=""):
     Will upload to Document/ if only the local path is specified.
     """
     if not remote_path:
-        remote_path = "Document/" + os.path.basename(local_path)
-    d.upload_file(local_path, remote_path)
+        remote_path = ROOT_FOLDER + "/" + os.path.basename(local_path)
+    d.upload_file(local_path, add_prefix(remote_path))
 
-def do_upload_template(d, local_path, remote_path=''):
-    if not remote_path:
-        remote_path = os.path.basename(local_path)
+def do_upload_template(d, local_path, template_name=''):
+    """
+    Upload a local document as a template for the reader.
+    The template name will be set as the file name if
+    only the local path is specified.
+    """
+    if not template_name:
+        template_name = os.path.basename(local_path)
     with open(local_path, 'rb') as f:
-        d.upload_template(f, remote_path)
+        d.upload_template(f, template_name)
 
 def do_download(d, remote_path, local_path):
     """
@@ -75,7 +81,7 @@ def do_download(d, remote_path, local_path):
         f.write(data)
 
 
-def do_list_document_info(d, remote_path=False):
+def do_list_document_info(d, remote_path=''):
     """
     Print metadata about a document on the device.
     If no path is given, information is printed for every document on the device.
@@ -87,13 +93,13 @@ def do_list_document_info(d, remote_path=False):
             for key in info:
                 print("    - " + key + ": " + info[key])
     else:
-        info = d.list_document_info(remote_path)
+        info = d.list_document_info(add_prefix(remote_path))
         print(info["entry_path"])
         for key in info:
             print("    - " + key + ": " + info[key])
 
 
-def do_dispay_document(d, remote_path, page=1):
+def do_display_document(d, remote_path, page=1):
     """
     Displays the given document on the reader.
     The path must be a valid path on the device.
@@ -103,7 +109,7 @@ def do_dispay_document(d, remote_path, page=1):
     
     Example: dptrp1 display-document Document/Magazines/Comic.pdf 5
     """
-    info = d.list_document_info(remote_path)
+    info = d.list_document_info(add_prefix(remote_path))
     d.display_document(info["entry_id"], page)
 
 
@@ -111,13 +117,17 @@ def do_update_firmware(d, local_path):
     with open(local_path, "rb") as fwfh:
         d.update_firmware(fwfh)
 
+def add_prefix(remote_path: str) -> str:
+    return remote_path if remote_path.startswith(ROOT_FOLDER) else f'{ROOT_FOLDER}/{remote_path}'
 
 def do_delete_document(d, remote_path):
-    d.delete_document(remote_path)
+    d.delete_document(add_prefix(remote_path))
 
+def do_delete_template(d,remote_path):
+    d.delete_template(remote_path)
 
 def do_delete_folder(d, remote_path):
-    d.delete_folder(remote_path)
+    d.delete_folder(add_prefix(remote_path))
 
 
 def do_sync(d, local_path, remote_path="Document"):
@@ -133,7 +143,7 @@ def do_sync(d, local_path, remote_path="Document"):
 
 
 def do_new_folder(d, remote_path):
-    d.new_folder(remote_path)
+    d.new_folder(add_prefix(remote_path))
 
 
 def do_wifi_list(d):
@@ -261,6 +271,7 @@ commands = {
     "download": do_download,
     "delete": do_delete_document,
     "delete-folder": do_delete_folder,
+    "delete-template": do_delete_template,
     "new-folder": do_new_folder,
     "move-document": do_move_document,
     "copy-document": do_copy_document,
@@ -276,7 +287,7 @@ commands = {
     "update-firmware": do_update_firmware,
     "sync": do_sync,
     "help": do_help,
-    "display-document": do_dispay_document,
+    "display-document": do_display_document,
     "get-configuration": do_get_config,
     "set-configuration": do_set_config,
 }
